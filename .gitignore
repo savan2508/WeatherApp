@@ -1,7 +1,11 @@
-/.env
+/tests/.env
 /.idea/WeatherApp.iml
 /.idea/vcs.xml
 /.idea/inspectionProfiles/Project_Default.xml
 /.idea/misc.xml
 /.idea/modules.xml
 /.idea/inspectionProfiles/profiles_settings.xml
+/dist/
+/weathermap.egg-info/
+/dist
+/venv/
