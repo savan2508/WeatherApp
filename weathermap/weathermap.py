@@ -29,31 +29,101 @@ class Weather:
     To get a simplified version of the data for the next 12 hours, you can use:
         >>> weather1.next12h_simplified()
     """
-    def __init__(self, apikey, city=None, lat=None, lon=None, units="imperial"):
+
+    def __init__(self, apikey: str, city: str = None, lat: float = None, lon: float = None, **kwargs):
         """
         Initialize the Weather object.
 
         :param apikey: Your API key from openweathermap.org
         :type apikey: str
         :param city: Name of the city, default is None
-        :type city: str, optional
+        :type city: str
         :param lat: Latitude coordinate, default is None
-        :type lat: float, optional
+        :type lat: float
         :param lon: Longitude coordinate, default is None
-        :type lon: float, optional
+        :type lon: float
+        must provide either city or latitude and longitude or zipcode and country code
         """
-        if city:
-            url = f"https://api.openweathermap.org/data/2.5/forecast?q={city},uk&APPID={apikey}&units={units}"
-            r = requests.get(url)
+        self.base_url = "https://api.openweathermap.org/data/2.5/forecast?"
+        self.city = city.strip() if city is not None else None
+        self.apikey = apikey
+        self.lat = str(lat) if lat is not None else None
+        self.lon = str(lon) if lon is not None else None
+        self.zip = None
+        self.country = None
+        self.data = None
+        self.state = None
+        self.units = "Imperial"
+
+        if 'zip' in kwargs:
+            self.zip = str(kwargs['zip']).strip()
+            del kwargs['zip']
+        if 'country' in kwargs:
+            self.country = kwargs['country'].strip()
+            del kwargs['country']
+        if 'units' in kwargs:
+            self.units = kwargs['units'].strip()
+            del kwargs['units']
+        if 'state' in kwargs:
+            self.state = kwargs['state'].strip()
+            del kwargs['state']
+
+        self._validate_input()
+
+    def _validate_input(self):
+        if not self.apikey:
+            raise ValueError("API key is required.")
+
+        if not any([self.city, (self.lat and self.lon), (self.zip and self.country)]):
+            if ((self.lat or self.lon) and self.zip is None and self.country is None
+                  and self.city is None):
+                raise ValueError("Please provide valid latitude and longitude values")
+            elif (self.zip or self.country) and (self.lat and self.lon and self.city) is None:
+                raise ValueError("Please provide valid zip and county code values")
+            else:
+                raise ValueError("You must provide either city or latitude and longitude or zipcode and country code.")
+
+    def forcast(self):
+        if self.city:
+            if self.city and self.state and self.country:
+                url = f"{self.base_url}q={self.city},{self.state},{self.country}&APPID={self.apikey}&units={self.units}"
+                r = requests.get(url.strip())
+                self.data = r.json()
+
+            elif self.city and self.country:
+                url = f"{self.base_url}q={self.city},{self.country}&APPID={self.apikey}&units={self.units}"
+                r = requests.get(url.strip())
+                self.data = r.json()
+
+            else:
+                url = f"{self.base_url}q={self.city}&APPID={self.apikey}&units={self.units}"
+                r = requests.get(url.strip())
+                self.data = r.json()
+
+                if self.data["cod"] != "200":
+                    raise ValueError(self.data["message"], "Check spelling or provide state and country code, "
+                                                           "or try zipcode and country.")
+
+        elif self.lat and self.lon:
+
+            url = f"{self.base_url}lat={self.lat}&lon={self.lon}&APPID={self.apikey}&units={self.units}"
+            r = requests.get(url.strip())
             self.data = r.json()
 
-        elif lat and lon:
-            url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&APPID={apikey}&units={units}"
-            r = requests.get(url)
+            if self.data["cod"] != "200":
+                raise ValueError(self.data["message"], "Please provide valid latitude and longitude value")
+
+        elif self.zip and self.country:
+
+            url = f"{self.base_url}zip={self.zip},{self.country}&APPID={self.apikey}&units={self.units}"
+            r = requests.get(url.strip())
             self.data = r.json()
 
-        else:
-            raise TypeError("Provide either a city or lat and long arguments")
+            if self.data["cod"] != "200":
+                raise ValueError(self.data["message"], "Please provide valid zipcode and country code.")
+        #
+        #     except AttributeError:
+        #         raise TypeError("Provide either a city or lat and long arguments")
 
         if self.data["cod"] != "200":
             raise ValueError(self.data["message"])
@@ -70,6 +140,6 @@ class Weather:
         """
         simple_data = []
         for dict_weather in self.data['list'][:4]:
-            simple_data.append((dict_weather['dt_txt'], dict_weather['main']['temp'], dict_weather['weather'][0]['description']))
+            simple_data.append((dict_weather['dt_txt'], dict_weather['main']['temp'],
+                                dict_weather['weather'][0]['description']))
         return simple_data
-

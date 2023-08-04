@@ -1,1 +1,1 @@
-from WeatherApp.weathermap import Weather
+from weathermap import *
