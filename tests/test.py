@@ -9,9 +9,8 @@ load_dotenv()
 
 openweather_api = os.getenv('OPENWEATHER_API')
 
-help(Weather)
-# tampa_weather = Weather(apikey=openweather_api, city="Tampa,US")
-# tampa_weather.forcast()
+tampa_weather = Weather(apikey="openweather_api", city="Tampa,US")
+tampa_weather.forcast()
 #
 # pprint.pprint(tampa_weather.data)
 

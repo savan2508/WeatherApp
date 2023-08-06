@@ -1,7 +1,8 @@
 import requests
+from .WeatherCache import WeatherCache
 
 
-class Weather:
+class Weather(WeatherCache):
     """
     Weather Class:
 
@@ -18,16 +19,16 @@ class Weather:
     5. Make sure to copy the generated API key, as it will be required to create a Weather object.
 
     Example of creating a weather object using a city name and API key:
-        >>> weather1 = Weather(apikey="231432521352512355", city="Tampa, US")
+        weather1 = Weather(apikey="231432521352512355", city="Tampa, US")
 
     Example of creating a weather object using latitude and longitude coordinates:
-        >>> weather2 = Weather(apikey="1234225325123523532", lat=41.4, lon=-23.4)
+        weather2 = Weather(apikey="1234225325123523532", lat=41.4, lon=-23.4)
 
     To retrieve complete information regarding the next 12-hour forecast, use the following method:
-        >>> weather1.next_12h()
+        weather1.next_12h()
 
     To get a simplified version of the data for the next 12 hours, you can use:
-        >>> weather1.next12h_simplified()
+        weather1.next12h_simplified()
     """
 
     def __init__(self, apikey: str, city: str = None, lat: float = None, lon: float = None, **kwargs):
@@ -44,6 +45,7 @@ class Weather:
         :type lon: float
         must provide either city or latitude and longitude or zipcode and country code
         """
+        super().__init__(**kwargs)
         self.base_url = "https://api.openweathermap.org/data/2.5/forecast?"
         self.city = city.strip() if city is not None else None
         self.apikey = apikey
@@ -84,49 +86,52 @@ class Weather:
                 raise ValueError("You must provide either city or latitude and longitude or zipcode and country code.")
 
     def forcast(self):
-        if self.city:
-            if self.city and self.state and self.country:
-                url = f"{self.base_url}q={self.city},{self.state},{self.country}&APPID={self.apikey}&units={self.units}"
-                r = requests.get(url.strip())
-                self.data = r.json()
-
-            elif self.city and self.country:
-                url = f"{self.base_url}q={self.city},{self.country}&APPID={self.apikey}&units={self.units}"
-                r = requests.get(url.strip())
-                self.data = r.json()
-
-            else:
-                url = f"{self.base_url}q={self.city}&APPID={self.apikey}&units={self.units}"
-                r = requests.get(url.strip())
-                self.data = r.json()
-
-                if self.data["cod"] != "200":
-                    raise ValueError(self.data["message"], "Check spelling or provide state and country code, "
-                                                           "or try zipcode and country.")
-
-        elif self.lat and self.lon:
-
-            url = f"{self.base_url}lat={self.lat}&lon={self.lon}&APPID={self.apikey}&units={self.units}"
-            r = requests.get(url.strip())
-            self.data = r.json()
-
-            if self.data["cod"] != "200":
-                raise ValueError(self.data["message"], "Please provide valid latitude and longitude value")
-
-        elif self.zip and self.country:
-
-            url = f"{self.base_url}zip={self.zip},{self.country}&APPID={self.apikey}&units={self.units}"
-            r = requests.get(url.strip())
-            self.data = r.json()
-
-            if self.data["cod"] != "200":
-                raise ValueError(self.data["message"], "Please provide valid zipcode and country code.")
+        # if self.city:
+        #     if self.city and self.state and self.country:
+        #         url = f"{self.base_url}q={self.city},{self.state},{self.country}&APPID={self.apikey}&units={self.units}"
+        #         r = requests.get(url.strip())
+        #         self.data = r.json()
         #
-        #     except AttributeError:
-        #         raise TypeError("Provide either a city or lat and long arguments")
-
-        if self.data["cod"] != "200":
-            raise ValueError(self.data["message"])
+        #     elif self.city and self.country:
+        #         url = f"{self.base_url}q={self.city},{self.country}&APPID={self.apikey}&units={self.units}"
+        #         r = requests.get(url.strip())
+        #         self.data = r.json()
+        #
+        #     else:
+        #         url = f"{self.base_url}q={self.city}&APPID={self.apikey}&units={self.units}"
+        #         r = requests.get(url.strip())
+        #         self.data = r.json()
+        #
+        #         if self.data["cod"] != "200":
+        #             raise ValueError(self.data["message"], "Check spelling or provide state and country code, "
+        #                                                    "or try zipcode and country.")
+        #
+        # elif self.lat and self.lon:
+        #
+        #     url = f"{self.base_url}lat={self.lat}&lon={self.lon}&APPID={self.apikey}&units={self.units}"
+        #     r = requests.get(url.strip())
+        #     self.data = r.json()
+        #
+        #     if self.data["cod"] != "200":
+        #         raise ValueError(self.data["message"], "Please provide valid latitude and longitude value")
+        #
+        # elif self.zip and self.country:
+        #
+        #     url = f"{self.base_url}zip={self.zip},{self.country}&APPID={self.apikey}&units={self.units}"
+        #     r = requests.get(url.strip())
+        #     self.data = r.json()
+        #
+        #     if self.data["cod"] != "200":
+        #         raise ValueError(self.data["message"], "Please provide valid zipcode and country code.")
+        # #
+        # #     except AttributeError:
+        # #         raise TypeError("Provide either a city or lat and long arguments")
+        #
+        # if self.data["cod"] != "200":
+        #     raise ValueError(self.data["message"])
+        testdata = {"app": 1, "man": 2}
+        self.data = testdata
+        self.create_cache(city="Tampa", data=testdata)
 
     def next_12h(self):
         """
