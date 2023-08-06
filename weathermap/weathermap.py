@@ -1,8 +1,9 @@
 import requests
 from .WeatherCache import WeatherCache
+from .locationtrack import LocationTrack
 
 
-class Weather(WeatherCache):
+class Weather(WeatherCache, LocationTrack):
     """
     Weather Class:
 
@@ -45,7 +46,6 @@ class Weather(WeatherCache):
         :type lon: float
         must provide either city or latitude and longitude or zipcode and country code
         """
-        super().__init__(**kwargs)
         self.base_url = "https://api.openweathermap.org/data/2.5/forecast?"
         self.city = city.strip() if city is not None else None
         self.apikey = apikey
@@ -56,6 +56,11 @@ class Weather(WeatherCache):
         self.data = None
         self.state = None
         self.units = "Imperial"
+        self.cache_system = True
+        self.forcast_timeout = "1D"
+        self.weather_timeout = "1H"
+        self.track_location = True
+        self.kwargs = kwargs
 
         if 'zip' in kwargs:
             self.zip = str(kwargs['zip']).strip()
@@ -69,21 +74,36 @@ class Weather(WeatherCache):
         if 'state' in kwargs:
             self.state = kwargs['state'].strip()
             del kwargs['state']
+        if 'cache_system' in kwargs:
+            self.cache_system = kwargs['cache_system']
+            del kwargs['cache_system']
+        if 'track_location' in kwargs:
+            self.track_location = kwargs['track_location']
 
+        super().__init__(self.cache_system, **kwargs)
+        super(LocationTrack, self).__init__(tracking=self.track_location)
         self._validate_input()
 
     def _validate_input(self):
         if not self.apikey:
             raise ValueError("API key is required.")
 
+        if type(self.track_location) == bool:
+            if self.track_location:
+                self.get_location_info()
+        else:
+            raise ValueError ("track_location must be bool")
+
         if not any([self.city, (self.lat and self.lon), (self.zip and self.country)]):
             if ((self.lat or self.lon) and self.zip is None and self.country is None
-                  and self.city is None):
+                    and self.city is None):
                 raise ValueError("Please provide valid latitude and longitude values")
             elif (self.zip or self.country) and (self.lat and self.lon and self.city) is None:
                 raise ValueError("Please provide valid zip and county code values")
             else:
                 raise ValueError("You must provide either city or latitude and longitude or zipcode and country code.")
+
+
 
     def forcast(self):
         # if self.city:

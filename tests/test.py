@@ -1,6 +1,6 @@
 import os
 import pprint
-# from weathermap.weathermap import Weather
+from weathermap.weathermap import Weather
 from dotenv import load_dotenv
 from weathermap import Weather
 
@@ -9,8 +9,9 @@ load_dotenv()
 
 openweather_api = os.getenv('OPENWEATHER_API')
 
-tampa_weather = Weather(apikey="openweather_api", city="Tampa,US")
-tampa_weather.forcast()
+
+# tampa_weather = Weather(apikey="openweather_api", city="Tampa,US")
+# tampa_weather.forcast()
 #
 # pprint.pprint(tampa_weather.data)
 

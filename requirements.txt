@@ -1,0 +1,6 @@
+python-dotenv~=1.0.0
+setuptools~=65.5.1
+requests~=2.31.0
+ipinfo~=4.4.2
+geocoder~=1.38.1
+geoip2~=4.7.0
