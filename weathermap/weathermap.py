@@ -158,18 +158,32 @@ class Weather(WeatherCache, LocationTrack):
                 url = (f"{self.base_url}forecast?q={self.city},{self.state},{self.country}&APPID="
                        f"{self.apikey}&units={self.units}")
                 r = requests.get(url.strip())
-
-                self.data = r.json()
+                try:
+                    self.create_cache(data=r.json(), city=self.city, state=self.state, country=self.country,
+                                      req_type=self.req_type)
+                    self.data = r.json()
+                except:
+                    self.data = r.json()
 
             elif self.city and self.country:
                 url = f"{self.base_url}forecast?q={self.city},{self.country}&APPID={self.apikey}&units={self.units}"
                 r = requests.get(url.strip())
-                self.data = r.json()
+                try:
+                    self.create_cache(data=r.json(), city=self.city, state=self.state, country=self.country,
+                                      req_type=self.req_type)
+                    self.data = r.json()
+                except:
+                    self.data = r.json()
 
             else:
                 url = f"{self.base_url}forecast?q={self.city}&APPID={self.apikey}&units={self.units}"
                 r = requests.get(url.strip())
-                self.data = r.json()
+                try:
+                    self.create_cache(data=r.json(), city=self.city, state=self.state, country=self.country,
+                                      req_type=self.req_type)
+                    self.data = r.json()
+                except:
+                    self.data = r.json()
 
                 if self.data["cod"] != "200":
                     raise ValueError(self.data["message"], "Check spelling or provide state and country code, "

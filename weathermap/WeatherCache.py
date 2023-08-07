@@ -1,6 +1,5 @@
 import os
 import json
-import re
 from datetime import datetime, timedelta
 
 
@@ -14,21 +13,22 @@ class WeatherCache:
     def create_dir(weather_dir):
         os.makedirs(weather_dir, exist_ok=True)
 
-    def _get_cache_filename(self, **kwargs):
-        name_dict = self.validate_name_for_directory_name(kwargs)
+    def _get_cache_filename(self, names):
+        name_dict = self.validate_name_for_directory_name(names)
+        formatted_date_time = datetime.now().strftime('%Y-%m-%d_%H-%M')
+        if name_dict['date_time']:
+            formatted_date_time = name_dict['date_time'].strftime('%Y-%m-%d_%H-%M')
         try:
-            formatted_date_time = datetime.now().strftime('%Y-%m-%d_%H-%M')
-            if name_dict['date_time']:
-                formatted_date_time = name_dict['date_time'].strftime('%Y-%m-%d_%H-%M')
-
-            return os.path.join(self.cache_directory, f"{name_dict['city']}{name_dict['state']}{name_dict['state']}_"
+            return os.path.join(self.cache_directory, f"{name_dict['city']}{name_dict['state'][0:2].upper()}"
+                                                      f"{name_dict['country']}_{name_dict['req_type'][0:3]}_"
                                                       f"{formatted_date_time}.json")
-        except OSError:
+        except OSError or AttributeError:
             raise OSError("Cache system disabled")
 
-    def create_cache(self, city, data, date_time=None):
+    def create_cache(self, data, **kwargs):
+        name_dict = self.validate_name_for_directory_name(kwargs)
         try:
-            filename = self._get_cache_filename(city=city, date_time=date_time)
+            filename = self._get_cache_filename(name_dict)
             with open(filename, 'w') as file:
                 json.dump(data, file)
         except OSError:
@@ -61,18 +61,18 @@ class WeatherCache:
         except OSError:
             raise OSError("Cache System disabled")
 
-    def get_cached_weather(self, city, timeout, req_type):
+    def get_cached_weather(self, city, req_type, timeout=None):
         now = datetime.now()
-        one_hour_ago = now - timedelta(timeout)
+        one_hour_ago = now - timedelta(hours=1)
         try:
             cached_files = os.listdir(self.cache_directory)
 
             for filename in cached_files:
                 if filename.endswith(".json"):
-                    file_city, file_time_str = filename.split("_", 1)
-                    file_time = datetime.strptime(file_time_str[:-5], '%Y-%m-%d_%H-%M')
+                    file_city, file_req_time, file_time_str = filename[:-5].split("_", 2)
+                    file_time = datetime.strptime(file_time_str, '%Y-%m-%d_%H-%M')
 
-                    if file_city == city and file_time >= one_hour_ago:
+                    if file_city == city and file_time >= one_hour_ago and file_req_time == req_type[:3]:
                         # The file exists for the same city and within the past 1 hour
                         try:
                             filepath = os.path.join(self.cache_directory, filename)
