@@ -9,22 +9,23 @@ class LocationError(Exception):
 
 class LocationTrack:
 
-    def __init__(self, tracking=True, **kwargs):
+    def __init__(self, track_location=True, **kwargs):
         self.city = None
         self.state = None
         self.country = None
         self.latitude = None
         self.longitude = None
-        self.zip = None
+        self.zip_code = None
         self.timezone = None
         self.kwargs = kwargs
-        city = self.city
 
-        if type(tracking) is bool:
-            if tracking:
+        if type(track_location) is bool:
+            if track_location:
                 self.get_location_info()
+            else:
+                raise LocationError("track_location is False.")
         else:
-            raise TypeError("tracking must be bool.")
+            raise TypeError("track_location must be bool.")
 
     def get_location_info(self):
         try:
@@ -79,7 +80,7 @@ class LocationTrack:
             'country': self.country,
             'latitude': self.latitude,
             'longitude': self.longitude,
-            'zip': self.zip_code,
+            'zip_code': self.zip_code,
             'timezone': self.timezone
         }
         return loc_dict
