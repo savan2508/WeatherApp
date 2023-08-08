@@ -9,3 +9,7 @@
 /weathermap.egg-info/
 /dist
 /venv/
+/tests/weather_cache/
+/.vscode/
+/__pycache__
+/weathermap/__pycache__
