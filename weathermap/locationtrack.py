@@ -8,8 +8,48 @@ class LocationError(Exception):
 
 
 class LocationTrack:
+    """
+    LocationTrack Class:
+
+    This class provides methods to track the geographical location of the user based on their IP address using either
+    the 'requests' library and IP geolocation API or the 'geocoder' library.
+
+
+    Args:
+        track_location (bool): If True, attempts to track the location automatically. If False, no location tracking
+        is performed.
+        **kwargs: Additional keyword arguments.
+
+    Attributes:
+        city (str): The city name of the tracked location.
+        state (str): The state or region name of the tracked location.
+        country (str): The country name of the tracked location.
+        latitude (str): The latitude coordinate of the tracked location.
+        longitude (str): The longitude coordinate of the tracked location.
+        zip_code (str): The postal code of the tracked location.
+        timezone (str): The timezone of the tracked location.
+        kwargs (dict): Additional keyword arguments passed during initialization.
+
+    Raises:
+        LocationError: Raised if location tracking fails or if incorrect arguments are provided.
+
+    Methods:
+        get_location_info(): Attempts to retrieve location information automatically using various methods.
+        loc_info_dict(): Returns a dictionary containing the tracked location information.
+    """
 
     def __init__(self, track_location=True, **kwargs):
+        """
+        Initialize the LocationTrack object.
+
+        Args:
+            track_location (bool): If True, attempts to track the location automatically. If False, no location tracking is performed.
+            **kwargs: Additional keyword arguments.
+
+        Raises:
+            LocationError: Raised if location tracking fails or if incorrect arguments are provided.
+            TypeError: Raised if the type of 'track_location' is not bool.
+        """
         self.city = None
         self.state = None
         self.country = None
@@ -28,6 +68,16 @@ class LocationTrack:
             raise TypeError("track_location must be bool.")
 
     def get_location_info(self):
+        """
+        Retrieve location information automatically using IP geolocation services.
+
+        This method attempts to retrieve location information automatically using IP geolocation services provided by the 'requests'
+        library and the 'geocoder' library. It first tries the 'requests' library and falls back to the 'geocoder' library if needed.
+
+        Raises:
+            LocationError: Raised if location tracking fails or if an invalid 'ipinfo_token' is provided.
+            requests.exceptions.RequestException: Raised if an error occurs while making a request to the IP geolocation API.
+        """
         try:
             # First, try using the 'requests' library and IP geolocation API
             if 'ipinfo_token' in self.kwargs:
@@ -74,6 +124,12 @@ class LocationTrack:
                 return LocationError(e, "Failed to retrieve location information automatically")
 
     def loc_info_dict(self):
+        """
+        Return a dictionary containing the tracked location information.
+
+        Returns:
+            dict: A dictionary containing the tracked location information.
+        """
         loc_dict = {
             'city': self.city,
             'state': self.state,

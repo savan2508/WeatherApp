@@ -10,12 +10,11 @@ class Weather(WeatherCache, LocationTrack):
     Weather Class:
 
     This class allows you to create a weather object by providing an API key along with either a city name or
-    latitude and longitude coordinates.
-    Weather class can only be run by providing the api key only. It will track the location of the computer based on
-    the IP address.
+    latitude and longitude coordinates. The Weather class can only be initialized by providing the API key. It will
+    track the location of the computer based on the IP address.
 
-    The Weather class has an additional functionality that supports the cache system. It is enabled by default, and it
-    helps reduce the similar API calls to help decrease the cost.
+    The Weather class has additional functionality that supports the cache system. It is enabled by default, and it
+    helps reduce similar API calls to decrease costs.
 
     To use the class, you'll need an API key from openweathermap.org.
 
@@ -53,25 +52,38 @@ class Weather(WeatherCache, LocationTrack):
         :type lat: float
         :param lon: Longitude coordinate, default is None
         :type lon: float
-        :param req_type: "weather" for current weather, "forcast" for forcast, "air_pollution" for air pollution,
+        :param req_type: "weather" for current weather, "forecast" for forecast, "air_pollution" for air pollution,
         default is weather
-        :type lon: str (weather or forcast)
-        must provide either city or latitude and longitude or zipcode and country code.
+        :type req_type: str (weather or forecast)
+        :keyword zip_code: Zip code of the location, default is None
+        :type zip_code: str
+        :keyword country: Country code of the location, default is None
+        :type country: str
+        :keyword units: Units for temperature measurement, default is "Imperial"
+        :type units: str
+        :keyword state: State of the location, default is None
+        :type state: str
+        :keyword cache_system: Enable or disable cache system, default is True
+        :type cache_system: bool
+        :keyword track_location: Enable or disable location tracking, default is True
+        :type track_location: bool
 
         Weather instance inherits LocationTrack module which can detect the location of the user based on the user IP.
-        If value for the city, zip_code or lat and long is provided, it will disable the location tracking. It can be
-        re-enabled by providing the argument track_location=True. (IMPORTANT - by enabling the location tracking, it
-        will overwrite the provided inputs of the city, state, country, zip_code, latitude and longitude values. The
-        LocationTrack function tracks the location of the user by IP address which may not be accurate location. Please
-        consider that the incorrect location may provide you inaccurate weather data.)
+        If a value for the city, zip_code, lat, and long is provided, location tracking will be disabled. It can be
+        re-enabled by providing the argument track_location=True. (IMPORTANT - enabling location tracking will overwrite
+        the provided inputs of city, state, country, zip_code, latitude, and longitude values. The LocationTrack
+        function tracks the location of the user by IP address which may not be an accurate location. Please consider
+        that the incorrect location may provide you inaccurate weather data.)
 
-        By default, the cache system is turned on which helps reduce the API calls to save cost. It can be disabled by
-        providing the kwargs cache_system=False. It is recommended to use a cache system. The timeout inputs can be
-        modified to control the frequency and longevity of the cache.
-        :keyword forcast_timeout, default is "1D" which is 1 day.
-        :keyword weather_timeout, default is "1H" which is 1 hour.
-        type: str which must be inputted as value of the unit as integer + first letter of units such as M for minutes,
-        H for hours, D for days. for example, 1D for 1 day, 5M for 5 minutes, 3H for 3 hours, etc.
+        By default, the cache system is turned on which helps reduce API calls to save costs. It can be disabled by
+        providing the keyword argument cache_system=False. It is recommended to use a cache system. The timeout inputs
+        can be modified to control the frequency and longevity of the cache.
+        :keyword forecast_timeout: Default is "1D" which is 1 day.
+        :type forecast_timeout: str (e.g., "1D" for 1 day, "5M" for 5 minutes, "3H" for 3 hours)
+        :keyword weather_timeout: Default is "1H" which is 1 hour.
+        :type weather_timeout: str (e.g., "1D" for 1 day, "5M" for 5 minutes, "3H" for 3 hours)
+        :keyword air_pollution_timeout: Default is "1D" which is 1 day.
+        :type air_pollution_timeout: str (e.g., "1D" for 1 day, "5M" for 5 minutes, "3H" for 3 hours)
 
         """
         self.base_url = "https://api.openweathermap.org/data/2.5/"
@@ -123,6 +135,16 @@ class Weather(WeatherCache, LocationTrack):
         self._validate_input()
 
     def _validate_input(self):
+        """
+        Validate the input parameters and track the location if enabled.
+
+        This method validates the input parameters of the Weather object, ensuring that required fields are provided
+        and have valid values. It checks the presence of the API key, the correctness of the `req_type` value, and
+        optionally tracks the location if enabled. If tracking is enabled, it retrieves location information.
+
+        :raises ValueError: When an API key is missing, or `req_type` is invalid, or location tracking configuration is
+        incorrect.
+        """
         if not self.apikey:
             raise ValueError("API key is required.")
 
@@ -151,6 +173,24 @@ class Weather(WeatherCache, LocationTrack):
                                      "code.")
 
     def api_request(self, req_type=None):
+        """
+        Make an API request to retrieve weather data.
+
+        This method sends an API request to retrieve weather data based on the specified request type (`req_type`).
+        It first checks if the cached data is available and within the valid time range. If not, it makes a new API
+        request and either caches the received data or uses it directly based on the response status.
+
+        :param req_type: The request type ("weather", "forcast", "air_pollution"). If provided, it updates the request
+        type for this call.
+        :type req_type: str, optional
+        :return: Retrieved weather data.
+        :rtype: dict
+        :raises OSError: When an OS error occurs during API request.
+        :raises FileNotFoundError: When the API response indicates an error.
+        :raises CacheCleaningDisabledError: When cache cleaning is disabled and cached data is not available.
+        :raises ValueError: When there is a missing attribute or the provided arguments are not valid.
+        :raises AttributeError: When there are not enough arguments provided to retrieve weather information.
+        """
         if req_type:
             self.req_type = req_type
 
@@ -172,7 +212,7 @@ class Weather(WeatherCache, LocationTrack):
                 else:
                     return self.data
             elif self.req_type == "air_pollution":
-                timeout_param = self.timeout_time_clean(timeout=self.forcast_timeout)
+                timeout_param = self.timeout_time_clean(timeout=self.air_pollution_timeout)
                 self.data = self.get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
                                                     state=self.state, country=self.country, lat=self.lat, lon=self.lon)
                 if self.data["cod"] != "200":
@@ -266,6 +306,22 @@ class Weather(WeatherCache, LocationTrack):
         return simple_data
 
     def timeout_time_clean(self, timeout):
+        """
+        Clean and convert timeout string into a dictionary format.
+
+        This method takes a timeout string and converts it into a dictionary format with keys representing different request
+        types ('forcast_timeout', 'weather_timeout', 'air_pollution_timeout'). It extracts numeric values and unit characters
+        from the timeout string and populates the corresponding dictionary keys based on the provided request type
+        ('req_type').
+
+        :param timeout: The timeout string to be cleaned and converted.
+        :type timeout: str
+        :return: A dictionary containing cleaned timeout values for different request types.
+        :rtype: dict
+        :raises InvalidTimeoutFormatError: If the provided timeout string format is invalid.
+        :raises InvalidTimeoutIntervalError: If the provided timeout interval is not valid.
+        """
+        # Constants for timeout dictionary keys
         output = {
             'req_type': self.req_type,
             'forcast_timeout': {
@@ -297,6 +353,7 @@ class Weather(WeatherCache, LocationTrack):
         else:
             raise ValueError("Please provide correct req_type")
 
+        # Use regex to match and extract timeout values
         match = re.match(r'^\d+\s*[a-zA-Z]+$', timeout)
         if match:
             match = re.search(r'\d+', timeout)
