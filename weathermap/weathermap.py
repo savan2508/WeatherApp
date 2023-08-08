@@ -1,7 +1,7 @@
 import re
 
 import requests
-from .WeatherCache import WeatherCache
+from .WeatherCache import WeatherCache, CacheCleaningDisabledError
 from .locationtrack import LocationTrack, LocationError
 
 
@@ -182,7 +182,7 @@ class Weather(WeatherCache, LocationTrack):
             else:
                 raise ValueError("Provide valid req_type. ['weather', 'forcast', 'air_pollution']")
 
-        except OSError or FileNotFoundError:
+        except OSError or FileNotFoundError or CacheCleaningDisabledError:
             if self.city:
                 if self.city and self.state and self.country:
                     url = (f"{self.base_url}forecast?q={self.city},{self.state},{self.country}&APPID="

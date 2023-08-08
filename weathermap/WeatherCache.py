@@ -3,13 +3,17 @@ import json
 from datetime import datetime, timedelta
 
 
+class CacheCleaningDisabledError(Exception):
+    pass
+
+
 class WeatherCache:
     def __init__(self, cache_system: bool = True, cache_directory: str = 'weather_cache',
                  auto_cache_clean_for_exceed_limit: bool = False,
                  cache_cleaning: bool = True, cache_size_limit_mb: int = 200, **kwargs):
         self.cache_directory = cache_directory
         self.cache_cleaning = cache_cleaning
-        self.cache_size_limit_mb= cache_size_limit_mb
+        self.cache_size_limit_mb = cache_size_limit_mb
         self.auto_cache_clean_for_exceed_limit = auto_cache_clean_for_exceed_limit
         if cache_system:
             self.create_dir(self.cache_directory)
@@ -28,7 +32,7 @@ class WeatherCache:
                     f"{name_dict['req_type'][0:3]}_{formatted_date_time}.json")
 
         except AttributeError:
-            raise AttributeError("Missing attribute to create a cache")
+            raise CacheCleaningDisabledError("Missing attribute to create a cache")
 
     def create_cache(self, data, **kwargs):
         name_dict = self.validate_name_for_directory_name(kwargs)
@@ -39,20 +43,12 @@ class WeatherCache:
         except OSError:
             raise OSError("Cache System disabled")
 
-    def delete_cache(self, city, date_time):
-        try:
-            filename = self._get_cache_filename(city, date_time)
-            if os.path.exists(filename):
-                os.remove(filename)
-        except OSError:
-            raise OSError("Cache System disabled")
-
     def get_cached_weather(self, timeout: dict, **kwargs):
         cache_filename = self._get_cache_filename(kwargs)
 
         cache_filename_city, cache_filename_req_type, cache_filename_time_str = cache_filename[:-5].split("_", 2)
 
-        forcast_time_delta = self.forcast_timedelta(timeout)
+        forcast_time_delta = datetime.now() - self.forcast_timedelta(timeout)
 
         try:
             cached_files = os.listdir(self.cache_directory)
@@ -76,9 +72,15 @@ class WeatherCache:
             raise FileNotFoundError(f"File not found: {cache_filename}")
 
         except OSError:
-            raise FileNotFoundError(f"File not found: {cache_filename}")
+            raise CacheCleaningDisabledError(f"File not found: {cache_filename}")
 
-    def forcast_timedelta(self, timeout):
+    @staticmethod
+    def forcast_timedelta(timeout: dict) -> timedelta:
+        """
+
+        :param timeout:
+        :return:
+        """
         if timeout['req_type'] == 'weather':
             placeholder = 'weather_timeout'
         elif timeout['req_type'] == 'forcast':
@@ -87,14 +89,19 @@ class WeatherCache:
             placeholder = 'air_pollution_timeout'
         else:
             raise ValueError("Please provide correct req_type")
-        now = datetime.now()
-        forcast_time_delta = now - timedelta(seconds=timeout[placeholder]['seconds'],
-                                             minutes=timeout[placeholder]['minutes'],
-                                             hours=timeout[placeholder]['hours'],
-                                             days=timeout[placeholder]['days'])
-        return forcast_time_delta
+        forcast_timedelta = timedelta(seconds=timeout[placeholder]['seconds'],
+                                      minutes=timeout[placeholder]['minutes'],
+                                      hours=timeout[placeholder]['hours'],
+                                      days=timeout[placeholder]['days'])
+        return forcast_timedelta
 
-    def validate_name_for_directory_name(self, input_dict: dict):
+    @staticmethod
+    def validate_name_for_directory_name(input_dict: dict) -> dict:
+        """
+        The method takes the keyword arguments for the function to clean them for naming the cache
+        :param input_dict: take keyword arguments from method
+        :return: cleaned dictionary with valid names
+        """
         dicty = {
             "city": "",
             "state": "",
@@ -117,11 +124,12 @@ class WeatherCache:
     def get_directory_size(self, directory):
         pass
 
-    def delete_oldest_and_outdated_file(self, directory, timeout: dict, req_type):
+    def delete_oldest_and_outdated_file(self, directory, timeout: dict):
         oldest_file = None
         oldest_timestamp = float('inf')
 
         forcast_time_delta = self.forcast_timedelta(timeout)
+        expired_file_time = datetime.now() - forcast_time_delta
 
         filenames = os.listdir(directory)
         for filename in filenames:
@@ -131,9 +139,10 @@ class WeatherCache:
                 filepath = os.path.join(directory, filename)
                 file_timestamp = os.path.getmtime(filepath)
 
-                if
+                if file_time > expired_file_time:
+                    os.remove(filepath)
 
-                if file_timestamp < oldest_timestamp:
+                elif file_timestamp < oldest_timestamp:
                     oldest_timestamp = file_timestamp
                     oldest_file = filepath
 
@@ -141,13 +150,21 @@ class WeatherCache:
             os.remove(oldest_file)
             # print(f"Deleted oldest file: {oldest_file}")
 
-    def manage_directory_size(self, directory: str=None, threshold_size : int = None):
+    def manage_directory_size(self, timeout, directory: str = None, threshold_size: int = None,
+                              cache_cleaning: bool = None):
         if directory is None:
             directory = self.cache_directory
         if threshold_size is None:
             threshold_size = int(self.cache_size_limit_mb) * 1024 * 1024
+        if cache_cleaning is None:
+            cache_cleaning = self.cache_cleaning
 
-        current_size = os.path.getsize(directory)
-        while current_size <= threshold_size:
-            self.delete_oldest_and_outdated_file(directory)
-
+        if cache_cleaning:
+            current_size = os.path.getsize(directory)
+            if current_size > threshold_size:
+                while current_size <= threshold_size / 2:
+                    self.delete_oldest_and_outdated_file(directory=directory, timeout=timeout)
+            else:
+                raise ValueError("Current directory size is not greater than the threshold size.")
+        else:
+            raise CacheCleaningDisabledError("cache_cleaning is disable. Please enable it use this feature.")
