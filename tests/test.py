@@ -11,11 +11,11 @@ load_dotenv()
 openweather_api = os.getenv('OPENWEATHER_API')
 
 
-# tampa_weather = Weather(apikey=openweather_api, city="Tampa")
+tampa_weather = Weather(apikey=openweather_api)
 # tampa_weather.api_request()
 
-a = WeatherCache().get_cached_weather(city="Tampa", timeout="hours=1", req_type="weather")
+# a = WeatherCache().get_cached_weather(city="Tampa", timeout="hours=1", req_type="weather")
 #
-pprint.pprint(a)
-# pprint.pprint(tampa_weather.data)
+# pprint.pprint(a)
+pprint.pprint(tampa_weather.api_request())
 

@@ -87,6 +87,7 @@ class Weather(WeatherCache, LocationTrack):
         self.cache_system = True
         self.forcast_timeout = "1D"
         self.weather_timeout = "1H"
+        self.air_pollution_timeout = "1D"
         self.track_location = True
         self.kwargs = kwargs
         self.enable_cache = True
@@ -153,66 +154,100 @@ class Weather(WeatherCache, LocationTrack):
         if req_type:
             self.req_type = req_type
 
-        if self.city:
-            if self.city and self.state and self.country:
-                url = (f"{self.base_url}forecast?q={self.city},{self.state},{self.country}&APPID="
-                       f"{self.apikey}&units={self.units}")
-                r = requests.get(url.strip())
-                try:
-                    self.create_cache(data=r.json(), city=self.city, state=self.state, country=self.country,
-                                      req_type=self.req_type)
-                    self.data = r.json()
-                except:
-                    self.data = r.json()
-
-            elif self.city and self.country:
-                url = f"{self.base_url}forecast?q={self.city},{self.country}&APPID={self.apikey}&units={self.units}"
-                r = requests.get(url.strip())
-                try:
-                    self.create_cache(data=r.json(), city=self.city, state=self.state, country=self.country,
-                                      req_type=self.req_type)
-                    self.data = r.json()
-                except:
-                    self.data = r.json()
-
+        try:
+            if self.req_type == "weather":
+                timeout_param = self.timeout_time_clean(timeout=self.weather_timeout)
+                self.data = self.get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
+                                                    state=self.state, country=self.country, lat=self.lat, lon=self.lon)
+                if self.data["cod"] != "200":
+                    raise FileNotFoundError(self.data["message"])
+                else:
+                    return self.data
+            elif self.req_type == "forcast":
+                timeout_param = self.timeout_time_clean(timeout=self.forcast_timeout)
+                self.data = self.get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
+                                                    state=self.state, country=self.country, lat=self.lat, lon=self.lon)
+                if self.data["cod"] != "200":
+                    raise FileNotFoundError(self.data["message"])
+                else:
+                    return self.data
+            elif self.req_type == "air_pollution":
+                timeout_param = self.timeout_time_clean(timeout=self.forcast_timeout)
+                self.data = self.get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
+                                                    state=self.state, country=self.country, lat=self.lat, lon=self.lon)
+                if self.data["cod"] != "200":
+                    raise FileNotFoundError(self.data["message"])
+                else:
+                    return self.data
             else:
-                url = f"{self.base_url}forecast?q={self.city}&APPID={self.apikey}&units={self.units}"
+                raise ValueError("Provide valid req_type. ['weather', 'forcast', 'air_pollution']")
+
+        except OSError or FileNotFoundError:
+            if self.city:
+                if self.city and self.state and self.country:
+                    url = (f"{self.base_url}forecast?q={self.city},{self.state},{self.country}&APPID="
+                           f"{self.apikey}&units={self.units}")
+                    r = requests.get(url.strip())
+                    self.data = r.json()
+                    if self.data["cod"] == "200":
+                        try:
+                            self.create_cache(data=r.json(), city=self.city, state=self.state, country=self.country,
+                                              req_type=self.req_type)
+                        except OSError:
+                            self.data = r.json()
+
+                elif self.city and self.country:
+                    url = f"{self.base_url}forecast?q={self.city},{self.country}&APPID={self.apikey}&units={self.units}"
+                    r = requests.get(url.strip())
+                    self.data = r.json()
+                    if self.data["cod"] == "200":
+                        try:
+                            self.create_cache(data=r.json(), city=self.city, state=self.state, country=self.country,
+                                              req_type=self.req_type)
+                        except OSError:
+                            self.data = r.json()
+                else:
+                    url = f"{self.base_url}forecast?q={self.city}&APPID={self.apikey}&units={self.units}"
+                    r = requests.get(url.strip())
+                    self.data = r.json()
+                    if self.data["cod"] == "200":
+                        try:
+                            self.create_cache(data=r.json(), city=self.city, state=self.state, country=self.country,
+                                              req_type=self.req_type)
+                        except OSError:
+
+                            self.data = r.json()
+
+                    if self.data["cod"] != "200":
+                        raise ValueError(self.data["message"], "Check spelling or provide state and country code, "
+                                                               "or try zipcode and country.")
+
+            elif self.lat and self.lon:
+
+                url = f"{self.base_url}forecast?lat={self.lat}&lon={self.lon}&APPID={self.apikey}&units={self.units}"
                 r = requests.get(url.strip())
-                try:
-                    self.create_cache(data=r.json(), city=self.city, state=self.state, country=self.country,
-                                      req_type=self.req_type)
-                    self.data = r.json()
-                except:
-                    self.data = r.json()
+                self.data = r.json()
 
                 if self.data["cod"] != "200":
-                    raise ValueError(self.data["message"], "Check spelling or provide state and country code, "
-                                                           "or try zipcode and country.")
+                    raise ValueError(self.data["message"], "Please provide valid latitude and longitude value")
 
-        elif self.lat and self.lon:
+            elif self.zip_code and self.country:
 
-            url = f"{self.base_url}forecast?lat={self.lat}&lon={self.lon}&APPID={self.apikey}&units={self.units}"
-            r = requests.get(url.strip())
-            self.data = r.json()
+                url = (f"{self.base_url}forecast?zip_code={self.zip_code},{self.country}&"
+                       f"APPID={self.apikey}&units={self.units}")
+                r = requests.get(url.strip())
+                self.data = r.json()
 
-            if self.data["cod"] != "200":
-                raise ValueError(self.data["message"], "Please provide valid latitude and longitude value")
+                if self.data["cod"] != "200":
+                    raise ValueError(self.data["message"], "Please provide valid zipcode and country code.")
 
-        elif self.zip_code and self.country:
-
-            url = (f"{self.base_url}forecast?zip_code={self.zip_code},{self.country}&"
-                   f"APPID={self.apikey}&units={self.units}")
-            r = requests.get(url.strip())
-            self.data = r.json()
-
-            if self.data["cod"] != "200":
-                raise ValueError(self.data["message"], "Please provide valid zipcode and country code.")
-        #
-        #     except AttributeError:
-        #         raise TypeError("Provide either a city or lat and long arguments")
+            else:
+                raise AttributeError("Not enough arguments provided to provide weather information.")
 
         if self.data["cod"] != "200":
             raise ValueError(self.data["message"])
+        else:
+            return self.data
 
     def next_12h(self):
         """
@@ -230,28 +265,58 @@ class Weather(WeatherCache, LocationTrack):
                                 dict_weather['weather'][0]['description']))
         return simple_data
 
-    @staticmethod
-    def timeout_time_clean(timeout):
+    def timeout_time_clean(self, timeout):
+        output = {
+            'req_type': self.req_type,
+            'forcast_timeout': {
+                'seconds': 0,
+                "minutes": 0,
+                "hours": 0,
+                "days": 0
+            },
+            'weather_timeout': {
+                'seconds': 0,
+                "minutes": 0,
+                "hours": 0,
+                "days": 0
+            },
+            'air_pollution_timeout': {
+                'seconds': 0,
+                "minutes": 0,
+                "hours": 0,
+                "days": 0
+            }
+        }
+        placeholder = ''
+        if output['req_type'] == 'weather':
+            placeholder = 'weather_timeout'
+        elif output['req_type'] == 'forcast':
+            placeholder = 'forcast_timeout'
+        elif output['req_type'] == 'air_pollution':
+            placeholder = 'air_pollution_timeout'
+        else:
+            raise ValueError("Please provide correct req_type")
+
         match = re.match(r'^\d+\s*[a-zA-Z]+$', timeout)
         if match:
             match = re.search(r'\d+', timeout)
             if match:
                 # Extract the number part
-                number = match.group()
+                number = int(match.group())
                 # Extract the character part (if any)
                 characters = timeout[match.end():].strip()
                 if characters[0].upper() == 'S':
-                    time_unit = "seconds"
+                    output[placeholder]["seconds"] = number
                 elif characters[0].upper() == 'M':
-                    time_unit = "minutes"
+                    output[placeholder]["minutes"] = number
                 elif characters[0].upper() == 'H':
-                    time_unit = "hours"
+                    output[placeholder]["hours"] = number
                 elif characters[0].upper() == 'D':
-                    time_unit = "days"
+                    output[placeholder]["days"] = number
                 else:
                     raise ValueError("Please provide a valid timeout interval")
 
-                return f"{time_unit}={number}"
+                return output
             else:
                 raise ValueError("Please provide valid time interval")
 
