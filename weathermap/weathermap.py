@@ -205,7 +205,7 @@ class Weather(WeatherCache, LocationTrack):
                         and self.city is None):
                     raise ValueError("Please provide valid latitude and longitude values")
                 elif (self.zip_code or self.country) and (self.lat and self.lon and self.city) is None:
-                    raise ValueError("Please provide valid zip_code and county code values")
+                    raise ValueError("Please provide valid zip_code and country code values")
                 else:
                     raise ValueError("Must provide either city or latitude and longitude or zipcode and country "
                                      "code.")
