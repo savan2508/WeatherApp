@@ -1,7 +1,7 @@
 import unittest
 from weathermap import Weather
 
-API_key = "1614693317375115619fb2c3b21b09b9"
+API_key = "insert"
 
 class TestExample(unittest.TestCase):
 
