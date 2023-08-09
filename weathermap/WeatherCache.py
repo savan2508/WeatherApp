@@ -31,7 +31,7 @@ class WeatherCache:
     Methods:
     - create_cache(data, timeout, **kwargs): Create cache for weather data.
     - get_cached_weather(timeout, **kwargs): Retrieve cached weather data.
-    - forcast_timedelta(timeout): Calculate the forecast time delta.
+    - forecast_timedelta(timeout): Calculate the forecast time delta.
     - validate_name_for_directory_name(input_dict): Validate and clean input dictionary for cache directory naming.
     - manage_directory_size(timeout, directory=None, threshold_size=None, cache_cleaning=None): Manage directory size by
       deleting outdated files when the cache size exceeds the threshold.
@@ -43,6 +43,7 @@ class WeatherCache:
         self.cache_cleaning = cache_cleaning
         self.cache_size_limit_mb = cache_size_limit_mb
         self.auto_cache_clean_for_exceed_limit = auto_cache_clean_for_exceed_limit
+        self.cache_system = cache_system
         if cache_system:
             self.create_dir(self.cache_directory)
 
@@ -109,44 +110,47 @@ class WeatherCache:
         :return: Cached weather data.
         :rtype: dict
         """
-        cache_filename = self._get_cache_filename(kwargs)
+        if self.cache_system:
+            cache_filename = self._get_cache_filename(kwargs)
 
-        cache_filename_city, cache_filename_req_type, cache_filename_time_str = cache_filename[:-5].split("_", 2)
+            cache_filename_city, cache_filename_req_type, cache_filename_time_str = cache_filename[:-5].split("_", 2)
 
-        forcast_time_delta = datetime.now() - self.forcast_timedelta(timeout)
+            forecast_time_delta = datetime.now() - self.forecast_timedelta(timeout)
+            try:
+                cached_files = os.listdir(self.cache_directory)
 
-        try:
-            cached_files = os.listdir(self.cache_directory)
+                for filename in cached_files:
+                    if filename.endswith(".json"):
+                        file_city, file_req_type, file_time_str = filename[:-5].split("_", 2)
+                        file_time = datetime.strptime(file_time_str, '%Y-%m-%d_%H-%M')
 
-            for filename in cached_files:
-                if filename.endswith(".json"):
-                    file_city, file_req_type, file_time_str = filename[:-5].split("_", 2)
-                    file_time = datetime.strptime(file_time_str, '%Y-%m-%d_%H-%M')
+                        if (file_city.upper() == cache_filename_city.upper() and file_time >= forecast_time_delta and
+                                file_req_type == cache_filename_req_type):
+                            # The file exists for the same city and within the past 1 hour
+                            try:
+                                filepath = os.path.join(self.cache_directory, filename)
+                                with open(filepath, 'r') as file:
+                                    return json.load(file)
+                            except FileNotFoundError:
+                                raise OSError(f"File not found: {cache_filename}")
 
-                    if (file_city == cache_filename_city and file_time >= forcast_time_delta and
-                            file_req_type == cache_filename_req_type):
-                        # The file exists for the same city and within the past 1 hour
-                        try:
+                        elif (self.cache_cleaning and file_time < forecast_time_delta
+                              and file_req_type == cache_filename_req_type):
                             filepath = os.path.join(self.cache_directory, filename)
-                            with open(filepath, 'r') as file:
-                                return json.load(file)
-                        except FileNotFoundError:
-                            raise OSError(f"File not found: {cache_filename}")
+                            os.remove(filepath)
 
-                    elif self.cache_cleaning and file_time > forcast_time_delta:
-                        filepath = os.path.join(self.cache_directory, filename)
-                        os.remove(filepath)
+                        elif self.auto_cache_clean_for_exceed_limit:
+                            self.manage_directory_size(timeout=timeout, directory=self.cache_directory)
 
-                    elif self.auto_cache_clean_for_exceed_limit:
-                        self.manage_directory_size(timeout=timeout, directory=self.cache_directory)
-
-            # No cached file found for the same city within the past 1 hour
-            raise FileNotFoundError(f"File not found: {cache_filename}")
-        except OSError:
-            raise CacheCleaningDisabledError(f"File not found: {cache_filename}")
+                # No cached file found for the same city within the past 1 hour
+                return FileNotFoundError(f"File not found: {cache_filename}")
+            except OSError:
+                raise CacheCleaningDisabledError(f"File not found: {cache_filename}")
+        else:
+            raise CacheCleaningDisabledError("Cache system is disabled.")
 
     @staticmethod
-    def forcast_timedelta(timeout: dict) -> timedelta:
+    def forecast_timedelta(timeout: dict) -> timedelta:
         """
         Calculate the forecast time delta based on the request type.
 
@@ -157,17 +161,17 @@ class WeatherCache:
         """
         if timeout['req_type'] == 'weather':
             placeholder = 'weather_timeout'
-        elif timeout['req_type'] == 'forcast':
-            placeholder = 'forcast_timeout'
+        elif timeout['req_type'] == 'forecast':
+            placeholder = 'forecast_timeout'
         elif timeout['req_type'] == 'air_pollution':
             placeholder = 'air_pollution_timeout'
         else:
             raise ValueError("Please provide correct req_type")
-        forcast_timedelta = timedelta(seconds=timeout[placeholder]['seconds'],
-                                      minutes=timeout[placeholder]['minutes'],
-                                      hours=timeout[placeholder]['hours'],
-                                      days=timeout[placeholder]['days'])
-        return forcast_timedelta
+        forecast_timedelta = timedelta(seconds=timeout[placeholder]['seconds'],
+                                       minutes=timeout[placeholder]['minutes'],
+                                       hours=timeout[placeholder]['hours'],
+                                       days=timeout[placeholder]['days'])
+        return forecast_timedelta
 
     @staticmethod
     def validate_name_for_directory_name(input_dict: dict) -> dict:
@@ -211,8 +215,8 @@ class WeatherCache:
         oldest_file = None
         oldest_timestamp = float('inf')
 
-        forcast_time_delta = self.forcast_timedelta(timeout)
-        expired_file_time = datetime.now() - forcast_time_delta
+        forecast_time_delta = self.forecast_timedelta(timeout)
+        expired_file_time = datetime.now() - forecast_time_delta
 
         filenames = os.listdir(directory)
         for filename in filenames:
@@ -222,7 +226,7 @@ class WeatherCache:
                 filepath = os.path.join(directory, filename)
                 file_timestamp = os.path.getmtime(filepath)
 
-                if file_time > expired_file_time:
+                if file_time > expired_file_time and file_req_type == timeout['req_type'][0:3]:
                     os.remove(filepath)
 
                 elif file_timestamp < oldest_timestamp:
