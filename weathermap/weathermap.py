@@ -233,25 +233,25 @@ class Weather(WeatherCache, LocationTrack):
 
         try:
             if self.req_type == "weather":
-                timeout_param = self.timeout_time_clean(timeout=self.weather_timeout)
-                self.data = self.get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
-                                                    state=self.state, country=self.country, lat=self.lat, lon=self.lon)
+                timeout_param = self._timeout_time_clean(timeout=self.weather_timeout)
+                self.data = self._get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
+                                                     state=self.state, country=self.country, lat=self.lat, lon=self.lon)
                 if str(self.data["cod"]) != "200":
                     raise FileNotFoundError(self.data["message"])
                 else:
                     return self.data
             elif self.req_type == "forecast":
-                timeout_param = self.timeout_time_clean(timeout=self.forecast_timeout)
-                self.data = self.get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
-                                                    state=self.state, country=self.country, lat=self.lat, lon=self.lon)
+                timeout_param = self._timeout_time_clean(timeout=self.forecast_timeout)
+                self.data = self._get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
+                                                     state=self.state, country=self.country, lat=self.lat, lon=self.lon)
                 if str(self.data["cod"]) != "200":
                     raise FileNotFoundError(self.data["message"])
                 else:
                     return self.data
             elif self.req_type == "air_pollution":
-                timeout_param = self.timeout_time_clean(timeout=self.air_pollution_timeout)
-                self.data = self.get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
-                                                    state=self.state, country=self.country, lat=self.lat, lon=self.lon)
+                timeout_param = self._timeout_time_clean(timeout=self.air_pollution_timeout)
+                self.data = self._get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
+                                                     state=self.state, country=self.country, lat=self.lat, lon=self.lon)
                 if str(self.data["cod"]) != "200":
                     raise FileNotFoundError(self.data["message"])
                 else:
@@ -260,7 +260,7 @@ class Weather(WeatherCache, LocationTrack):
                 raise ValueError("Provide valid req_type. ['weather', 'forecast', 'air_pollution']")
 
         except (OSError, FileNotFoundError, CacheCleaningDisabledError, TypeError):
-            timeout_param = self.timeout_time_clean(timeout=self.forecast_timeout)
+            timeout_param = self._timeout_time_clean(timeout=self.forecast_timeout)
             if self.city and self.req_type != 'air_pollution':
                 if self.city and self.state and self.country:
                     url = (f"{self.base_url}{self.req_type}?q={self.city},{self.state},{self.country}&APPID="
@@ -269,10 +269,10 @@ class Weather(WeatherCache, LocationTrack):
                     self.data = r.json()
                     if str(self.data["cod"]) == "200":
                         try:
-                            self.create_cache(data=r.json(),timeout=timeout_param,
-                                              city=self.city, state=self.state,
-                                              country=self.country,
-                                              req_type=self.req_type)
+                            self._create_cache(data=r.json(), timeout=timeout_param,
+                                               city=self.city, state=self.state,
+                                               country=self.country,
+                                               req_type=self.req_type)
                         except OSError:
                             self.data = r.json()
 
@@ -282,9 +282,9 @@ class Weather(WeatherCache, LocationTrack):
                     self.data = r.json()
                     if str(self.data["cod"]) == "200":
                         try:
-                            self.create_cache(data=r.json(), timeout=timeout_param,
-                                              city=self.city, state=self.state, country=self.country,
-                                              req_type=self.req_type)
+                            self._create_cache(data=r.json(), timeout=timeout_param,
+                                               city=self.city, state=self.state, country=self.country,
+                                               req_type=self.req_type)
                         except OSError:
                             self.data = r.json()
                 else:
@@ -293,9 +293,9 @@ class Weather(WeatherCache, LocationTrack):
                     self.data = r.json()
                     if str(self.data["cod"]) == "200":
                         try:
-                            self.create_cache(data=r.json(), timeout=timeout_param,
-                                              city=self.city, state=self.state, country=self.country,
-                                              req_type=self.req_type)
+                            self._create_cache(data=r.json(), timeout=timeout_param,
+                                               city=self.city, state=self.state, country=self.country,
+                                               req_type=self.req_type)
                         except OSError:
 
                             self.data = r.json()
@@ -355,7 +355,7 @@ class Weather(WeatherCache, LocationTrack):
         req_type = "forecast"
         return self.api_request(req_type=req_type)
 
-    def timeout_time_clean(self, timeout):
+    def _timeout_time_clean(self, timeout):
         """
         Clean and convert timeout string into a dictionary format.
 

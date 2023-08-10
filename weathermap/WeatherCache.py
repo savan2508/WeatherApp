@@ -31,8 +31,8 @@ class WeatherCache:
     Methods:
     - create_cache(data, timeout, **kwargs): Create cache for weather data.
     - get_cached_weather(timeout, **kwargs): Retrieve cached weather data.
-    - forecast_timedelta(timeout): Calculate the forecast time delta.
-    - validate_name_for_directory_name(input_dict): Validate and clean input dictionary for cache directory naming.
+    - _forecast_timedelta(timeout): Calculate the forecast time delta.
+    - _validate_name_for_directory_name(input_dict): Validate and clean input dictionary for cache directory naming.
     - manage_directory_size(timeout, directory=None, threshold_size=None, cache_cleaning=None): Manage directory size by
       deleting outdated files when the cache size exceeds the threshold.
 
@@ -45,10 +45,10 @@ class WeatherCache:
         self.auto_cache_clean_for_exceed_limit = auto_cache_clean_for_exceed_limit
         self.cache_system = cache_system
         if cache_system:
-            self.create_dir(self.cache_directory)
+            self._create_dir(self.cache_directory)
 
     @staticmethod
-    def create_dir(weather_dir):
+    def _create_dir(weather_dir):
         """
         Create a directory if it doesn't exist.
 
@@ -66,7 +66,7 @@ class WeatherCache:
         :return: Generated cache filename.
         :rtype: str
         """
-        name_dict = self.validate_name_for_directory_name(names)
+        name_dict = self._validate_name_for_directory_name(names)
         formatted_date_time = datetime.now().strftime('%Y-%m-%d_%H-%M')
         if name_dict['date_time']:
             formatted_date_time = name_dict['date_time'].strftime('%Y-%m-%d_%H-%M')
@@ -77,7 +77,7 @@ class WeatherCache:
         except AttributeError:
             raise CacheCleaningDisabledError("Missing attribute to create a cache")
 
-    def create_cache(self, data, timeout: dict, **kwargs):
+    def _create_cache(self, data, timeout: dict, **kwargs):
         """
         Create a cache for weather data.
 
@@ -88,7 +88,7 @@ class WeatherCache:
         :param kwargs: Additional data for naming the cache file.
         :type kwargs: dict
         """
-        name_dict = self.validate_name_for_directory_name(kwargs)
+        name_dict = self._validate_name_for_directory_name(kwargs)
         try:
             filename = os.path.join(self.cache_directory, self._get_cache_filename(name_dict))
             with open(filename, 'w') as file:
@@ -99,7 +99,7 @@ class WeatherCache:
         except OSError:
             raise CacheCleaningDisabledError("Cache System disabled")
 
-    def get_cached_weather(self, timeout: dict, **kwargs):
+    def _get_cached_weather(self, timeout: dict, **kwargs):
         """
         Retrieve cached weather data.
 
@@ -115,7 +115,7 @@ class WeatherCache:
 
             cache_filename_city, cache_filename_req_type, cache_filename_time_str = cache_filename[:-5].split("_", 2)
 
-            forecast_time_delta = datetime.now() - self.forecast_timedelta(timeout)
+            forecast_time_delta = datetime.now() - self._forecast_timedelta(timeout)
             try:
                 cached_files = os.listdir(self.cache_directory)
 
@@ -150,7 +150,7 @@ class WeatherCache:
             raise CacheCleaningDisabledError("Cache system is disabled.")
 
     @staticmethod
-    def forecast_timedelta(timeout: dict) -> timedelta:
+    def _forecast_timedelta(timeout: dict) -> timedelta:
         """
         Calculate the forecast time delta based on the request type.
 
@@ -174,7 +174,7 @@ class WeatherCache:
         return forecast_timedelta
 
     @staticmethod
-    def validate_name_for_directory_name(input_dict: dict) -> dict:
+    def _validate_name_for_directory_name(input_dict: dict) -> dict:
         """
         Validate and clean input data for naming cache directory.
 
@@ -199,7 +199,7 @@ class WeatherCache:
 
         return dicty
 
-    def delete_oldest_and_outdated_file(self, directory, timeout: dict):
+    def _delete_oldest_and_outdated_file(self, directory, timeout: dict):
         """
         Delete the oldest and outdated cache files from the specified directory.
 
@@ -215,7 +215,7 @@ class WeatherCache:
         oldest_file = None
         oldest_timestamp = float('inf')
 
-        forecast_time_delta = self.forecast_timedelta(timeout)
+        forecast_time_delta = self._forecast_timedelta(timeout)
         expired_file_time = datetime.now() - forecast_time_delta
 
         filenames = os.listdir(directory)
@@ -268,7 +268,7 @@ class WeatherCache:
             current_size = os.path.getsize(directory)
             if current_size > threshold_size:
                 while current_size <= threshold_size / 2:
-                    self.delete_oldest_and_outdated_file(directory=directory, timeout=timeout)
+                    self._delete_oldest_and_outdated_file(directory=directory, timeout=timeout)
             else:
                 raise ValueError("Current directory size is not greater than the threshold size.")
         else:

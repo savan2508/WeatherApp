@@ -1,5 +1,5 @@
 from weathermap.weathermap import Weather
-from weathermap.WeatherCache import WeatherCache
+from weathermap.WeatherCache import WeatherCache, CacheCleaningDisabledError
 from weathermap.locationtrack import LocationTrack, LocationError
 
-__all__ = ['Weather', 'WeatherCache', 'LocationTrack', 'LocationError']
+__all__ = ['Weather', 'WeatherCache', 'LocationTrack', 'LocationError', 'CacheCleaningDisabledError']
