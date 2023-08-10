@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name='weathermap',
-    version='1.0.7',
+    version='1.0.8',
     packages=['weathermap'],
     description='Openweathermap api simplified',
     license='MIT',
