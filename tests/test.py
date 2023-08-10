@@ -1,21 +1,60 @@
+import unittest
+from weathermap import Weather
 import os
-import pprint
-
-from weathermap import WeatherCache
-from weathermap.weathermap import Weather
 from dotenv import load_dotenv
 
 # Load the contents of the .env file into the environment variables
 load_dotenv()
 
-openweather_api = os.getenv('OPENWEATHER_API')
+API_key = os.getenv('OPENWEATHER_API')
 
 
-tampa_weather = Weather(apikey=openweather_api)
-# tampa_weather.api_request()
+class TestExample(unittest.TestCase):
 
-# a = WeatherCache().get_cached_weather(city="Tampa", timeout="hours=1", req_type="weather")
-#
-# pprint.pprint(a)
-pprint.pprint(tampa_weather.api_request())
+    def test_location_tracking(self):
+        # uses IP address coordinates
+        try:
+            weather_info = Weather(apikey=API_key)
+            weather_info.get_current_weather()
+            weather_info.get_forecast()
+        except ValueError:
+            self.fail("Unexpected ValueError raised")
+        except AssertionError:
+            self.fail("Unexpected AssertionError raised")
 
+    def test_city(self):
+        # uses coordinates for Tampa, Florida
+        try:
+            weather_info = Weather(apikey=API_key, city="Tampa")
+            weather_info.get_current_weather()
+            weather_info.get_forecast()
+        except ValueError:
+            self.fail("Unexpected ValueError raised")
+        except AssertionError:
+            self.fail("Unexpected AssertionError raised")
+
+    def test_lat_lon(self):
+        # uses coordinates for Tampa, Florida
+        try:
+            weather_info = Weather(apikey=API_key, lat=27.964157, lon=-82.452606)
+            weather_info.get_current_weather()
+            weather_info.get_forecast()
+        except ValueError:
+            self.fail("Unexpected ValueError raised")
+        except AssertionError:
+            self.fail("Unexpected AssertionError raised")
+
+    def test_zip_country(self):
+        # uses coordinates for Tampa, Florida -> Hillsborough County
+        try:
+            weather_info = Weather(apikey=API_key, zip_code=33592, country="US")
+            weather_info.get_current_weather()
+            weather_info.get_forecast()
+        except ValueError:
+            self.fail("Unexpected ValueError raised")
+        except AssertionError:
+            self.fail("Unexpected AssertionError raised")
+
+
+if __name__ == '__main__':
+    unittest.main()

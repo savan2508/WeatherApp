@@ -102,7 +102,6 @@ class Weather(WeatherCache, LocationTrack):
         self.weather_timeout = "1H"
         self.air_pollution_timeout = "1D"
         self.track_location = True
-        self.kwargs = kwargs
         self.req_type = req_type
 
         if 'zip_code' in kwargs:
@@ -316,7 +315,7 @@ class Weather(WeatherCache, LocationTrack):
 
             elif self.zip_code and self.country:
 
-                url = (f"{self.base_url}{self.req_type}?zip_code={self.zip_code},{self.country}&"
+                url = (f"{self.base_url}{self.req_type}?zip={self.zip_code},{self.country}&"
                        f"APPID={self.apikey}&units={self.units}")
                 r = requests.get(url.strip())
                 self.data = r.json()
@@ -347,6 +346,14 @@ class Weather(WeatherCache, LocationTrack):
             simple_data.append((dict_weather['dt_txt'], dict_weather['main']['temp'],
                                 dict_weather['weather'][0]['description']))
         return simple_data
+
+    def get_current_weather(self):
+        req_type = "weather"
+        return  self.api_request(req_type=req_type)
+
+    def get_forecast(self):
+        req_type = "forecast"
+        return self.api_request(req_type=req_type)
 
     def timeout_time_clean(self, timeout):
         """
