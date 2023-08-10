@@ -31,8 +31,8 @@ class WeatherCache:
     Methods:
     - create_cache(data, timeout, **kwargs): Create cache for weather data.
     - get_cached_weather(timeout, **kwargs): Retrieve cached weather data.
-    - forecast_timedelta(timeout): Calculate the forecast time delta.
-    - validate_name_for_directory_name(input_dict): Validate and clean input dictionary for cache directory naming.
+    - _forecast_timedelta(timeout): Calculate the forecast time delta.
+    - _validate_name_for_directory_name(input_dict): Validate and clean input dictionary for cache directory naming.
     - manage_directory_size(timeout, directory=None, threshold_size=None, cache_cleaning=None): Manage directory size by
       deleting outdated files when the cache size exceeds the threshold.
 
