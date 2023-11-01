@@ -25,8 +25,6 @@ class WeatherCache:
     :type auto_cache_clean_for_exceed_limit: bool
     :param cache_size_limit_mb: The cache size limit in megabytes (default is 200 MB).
     :type cache_size_limit_mb: int
-    :keyword timeout: A dictionary containing timeout values for different request types.
-    :type timeout: dict
 
     Methods:
     - create_cache(data, timeout, **kwargs): Create cache for weather data.

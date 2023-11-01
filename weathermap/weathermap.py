@@ -103,6 +103,7 @@ class Weather(WeatherCache, LocationTrack):
         self.air_pollution_timeout = "1D"
         self.track_location = True
         self.req_type = req_type
+        self.cache_size_limit_mb = 200
 
         if 'zip_code' in kwargs:
             self.zip_code = str(kwargs['zip_code']).strip()
@@ -155,6 +156,13 @@ class Weather(WeatherCache, LocationTrack):
                 del kwargs['track_location']
             else:
                 raise ValueError("track_location must be bool")
+        if 'cache_size_limit_mb' in kwargs:
+            if type(kwargs['cache_size_limit_mb']) == int:
+                self.cache_size_limit_mb = int(kwargs['cache_size_limit_mb'])
+                del kwargs['cache_size_limit_mb']
+            else:
+                raise ValueError("cache_size_limit_mb must be int")
+
         if self.city or self.zip_code or self.lon or self.lat:
             self.track_location = False
 
@@ -163,7 +171,7 @@ class Weather(WeatherCache, LocationTrack):
 
         if self.cache_system:
             WeatherCache.__init__(self, cache_system=self.cache_system, cache_directory='weather_cache',
-                                  cache_cleaning=self.cache_cleaning, **kwargs)
+                                  cache_cleaning=self.cache_cleaning, cache_size_limit_mb=200, **kwargs)
         if self.track_location:
             LocationTrack.__init__(self, track_location=self.track_location, **kwargs)
 
@@ -349,13 +357,41 @@ class Weather(WeatherCache, LocationTrack):
 
     def get_current_weather(self):
         req_type = "weather"
-        return  self.api_request(req_type=req_type)
+        return self.api_request(req_type=req_type)
 
     def get_forecast(self):
         req_type = "forecast"
         return self.api_request(req_type=req_type)
 
-    def _timeout_time_clean(self, timeout):
+    def cache_clean(self, timeout="3H", directory: str = "weather_cache", threshold_size: int = None,
+                    cache_cleaning: bool = None):
+        """
+        Manage the size of the cache directory by deleting files when exceeding the size limit.
+
+        This method checks the current size of the specified cache directory and compares it with the threshold size.
+        If the current size exceeds the threshold, it iteratively deletes the oldest and outdated cache files until
+        the directory size drops below half of the threshold size.
+
+        :param timeout: Timeout values for cache expiration.
+        :type timeout: str
+        :param directory: The directory to manage (default is the cache directory).
+        :type directory: str, optional
+        :param threshold_size: The threshold size in bytes (default is cache size limit * 1024 * 1024).
+        :type threshold_size: int, optional
+        :param cache_cleaning: Enable or disable cache cleaning (default is class's cache_cleaning attribute).
+        :type cache_cleaning: bool, optional
+        :raises ValueError: When the current directory size is not greater than the threshold size.
+        :raises CacheCleaningDisabledError: When cache_cleaning is disabled.
+        """
+        timeout = self._timeout_time_clean(timeout)
+        if threshold_size is None:
+            threshold_size = self.cache_size_limit_mb
+        if cache_cleaning is None:
+            cache_cleaning = self.cache_cleaning
+        self.manage_directory_size(timeout=timeout, directory=directory, threshold_size=threshold_size,
+                                   cache_cleaning=cache_cleaning)
+
+    def _timeout_time_clean(self, timeout: str) -> dict:
         """
         Clean and convert timeout string into a dictionary format.
 

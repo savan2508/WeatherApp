@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 setup(
     name='weathermap',
     version='1.0.8',
-    packages=['weathermap'],
+    packages=find_packages(),
     description='Openweathermap api simplified',
     license='MIT',
     long_description=long_description,
@@ -16,10 +16,10 @@ setup(
     url='https://github.com/savan2508/WeatherApp',
     keywords=['weather', 'forecast', 'openweathermap', 'openweather'],
     install_requires=[
-        'requests',
+        'requests', 'ipinfo~=4.4.2','geocoder~=1.38.1',
     ],
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
