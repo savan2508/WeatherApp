@@ -4,3 +4,6 @@ requests~=2.31.0
 ipinfo~=4.4.2
 geocoder~=1.38.1
 geoip2~=4.7.0
+
+weathermap~=1.0.8
+streamlit~=1.29.0
