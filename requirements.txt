@@ -7,3 +7,4 @@ geoip2~=4.7.0
 
 weathermap~=1.0.8
 streamlit~=1.29.0
+plotly~=5.18.0

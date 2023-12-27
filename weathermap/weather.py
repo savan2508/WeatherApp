@@ -39,8 +39,15 @@ class Weather(WeatherCache, LocationTrack):
         weather1.next12h_simplified()
     """
 
-    def __init__(self, apikey: str, city: str = None, lat: float = None, lon: float = None,
-                 req_type: str = "weather", **kwargs):
+    def __init__(
+        self,
+        apikey: str,
+        city: str = None,
+        lat: float = None,
+        lon: float = None,
+        req_type: str = "weather",
+        **kwargs,
+    ):
         """
         Initialize the Weather object.
 
@@ -104,66 +111,77 @@ class Weather(WeatherCache, LocationTrack):
         self.track_location = True
         self.req_type = req_type
 
-        if 'zip_code' in kwargs:
-            self.zip_code = str(kwargs['zip_code']).strip()
-            del kwargs['zip_code']
-        if 'country' in kwargs:
-            self.country = kwargs['country'].strip()
-            del kwargs['country']
-        if 'units' in kwargs:
-            self.units = kwargs['units'].strip()
-            del kwargs['units']
-        if 'state' in kwargs:
-            self.state = kwargs['state'].strip()
-            del kwargs['state']
-        if 'cache_system' in kwargs:
-            if type(kwargs['cache_system']) == bool:
-                self.cache_system = kwargs['cache_system']
-                del kwargs['cache_system']
+        if "zip_code" in kwargs:
+            self.zip_code = str(kwargs["zip_code"]).strip()
+            del kwargs["zip_code"]
+        if "country" in kwargs:
+            self.country = kwargs["country"].strip()
+            del kwargs["country"]
+        if "units" in kwargs:
+            self.units = kwargs["units"].strip()
+            del kwargs["units"]
+        if "state" in kwargs:
+            self.state = kwargs["state"].strip()
+            del kwargs["state"]
+        if "cache_system" in kwargs:
+            if type(kwargs["cache_system"]) == bool:
+                self.cache_system = kwargs["cache_system"]
+                del kwargs["cache_system"]
             else:
                 raise ValueError("cache_system must be bool.")
-        if 'cache_cleaning' in kwargs:
-            if type(kwargs['cache_cleaning']) == bool:
-                self.cache_cleaning = kwargs['cache_cleaning']
-                del kwargs['cache_cleaning']
+        if "cache_cleaning" in kwargs:
+            if type(kwargs["cache_cleaning"]) == bool:
+                self.cache_cleaning = kwargs["cache_cleaning"]
+                del kwargs["cache_cleaning"]
             else:
                 raise ValueError("cache_cleaning must be bool")
-        if 'forecast_timeout' in kwargs:
-            match = re.match(r'^\d+\s*[a-zA-Z]+$', kwargs['forecast_timeout'])
+        if "forecast_timeout" in kwargs:
+            match = re.match(r"^\d+\s*[a-zA-Z]+$", kwargs["forecast_timeout"])
             if match:
-                self.forecast_timeout = kwargs['forecast_timeout']
-                del kwargs['forecast_timeout']
+                self.forecast_timeout = kwargs["forecast_timeout"]
+                del kwargs["forecast_timeout"]
             else:
-                raise ValueError("Please provide valid forecast_timeout. eg.'1D' for 1 Day")
-        if 'weather_timeout' in kwargs:
-            match = re.match(r'^\d+\s*[a-zA-Z]+$', kwargs['weather_timeout'])
+                raise ValueError(
+                    "Please provide valid forecast_timeout. eg.'1D' for 1 Day"
+                )
+        if "weather_timeout" in kwargs:
+            match = re.match(r"^\d+\s*[a-zA-Z]+$", kwargs["weather_timeout"])
             if match:
-                self.weather_timeout = kwargs['weather_timeout']
-                del kwargs['weather_timeout']
+                self.weather_timeout = kwargs["weather_timeout"]
+                del kwargs["weather_timeout"]
             else:
-                raise ValueError("Please provide valid weather_timeout. eg.'1D' for 1 Day")
-        if 'air_pollution_timeout' in kwargs:
-            match = re.match(r'^\d+\s*[a-zA-Z]+$', kwargs['air_pollution_timeout'])
+                raise ValueError(
+                    "Please provide valid weather_timeout. eg.'1D' for 1 Day"
+                )
+        if "air_pollution_timeout" in kwargs:
+            match = re.match(r"^\d+\s*[a-zA-Z]+$", kwargs["air_pollution_timeout"])
             if match:
-                self.air_pollution_timeout = kwargs['air_pollution_timeout']
-                del kwargs['air_pollution_timeout']
+                self.air_pollution_timeout = kwargs["air_pollution_timeout"]
+                del kwargs["air_pollution_timeout"]
             else:
-                raise ValueError("Please provide valid air_pollution_timeout. eg.'1D' for 1 Day")
-        if 'track_location' in kwargs:
-            if type(kwargs['track_location']) == bool:
-                self.track_location = kwargs['track_location']
-                del kwargs['track_location']
+                raise ValueError(
+                    "Please provide valid air_pollution_timeout. eg.'1D' for 1 Day"
+                )
+        if "track_location" in kwargs:
+            if type(kwargs["track_location"]) == bool:
+                self.track_location = kwargs["track_location"]
+                del kwargs["track_location"]
             else:
                 raise ValueError("track_location must be bool")
         if self.city or self.zip_code or self.lon or self.lat:
             self.track_location = False
 
-        if 'track_location' in kwargs:
-            self.track_location = kwargs['track_location']
+        if "track_location" in kwargs:
+            self.track_location = kwargs["track_location"]
 
         if self.cache_system:
-            WeatherCache.__init__(self, cache_system=self.cache_system, cache_directory='weather_cache',
-                                  cache_cleaning=self.cache_cleaning, **kwargs)
+            WeatherCache.__init__(
+                self,
+                cache_system=self.cache_system,
+                cache_directory="weather_cache",
+                cache_cleaning=self.cache_cleaning,
+                **kwargs,
+            )
         if self.track_location:
             LocationTrack.__init__(self, track_location=self.track_location, **kwargs)
 
@@ -199,15 +217,29 @@ class Weather(WeatherCache, LocationTrack):
                 raise ValueError("track_location must be bool")
 
         except (LocationError, ValueError):
-            if not any([self.city, (self.lat and self.lon), (self.zip_code and self.country)]):
-                if ((self.lat or self.lon) and self.zip_code is None and self.country is None
-                        and self.city is None):
-                    raise ValueError("Please provide valid latitude and longitude values")
-                elif (self.zip_code or self.country) and (self.lat and self.lon and self.city) is None:
-                    raise ValueError("Please provide valid zip_code and country code values")
+            if not any(
+                [self.city, (self.lat and self.lon), (self.zip_code and self.country)]
+            ):
+                if (
+                    (self.lat or self.lon)
+                    and self.zip_code is None
+                    and self.country is None
+                    and self.city is None
+                ):
+                    raise ValueError(
+                        "Please provide valid latitude and longitude values"
+                    )
+                elif (self.zip_code or self.country) and (
+                    self.lat and self.lon and self.city
+                ) is None:
+                    raise ValueError(
+                        "Please provide valid zip_code and country code values"
+                    )
                 else:
-                    raise ValueError("Must provide either city or latitude and longitude or zipcode and country "
-                                     "code.")
+                    raise ValueError(
+                        "Must provide either city or latitude and longitude or zipcode and country "
+                        "code."
+                    )
 
     def api_request(self, req_type=None):
         """
@@ -234,45 +266,76 @@ class Weather(WeatherCache, LocationTrack):
         try:
             if self.req_type == "weather":
                 timeout_param = self._timeout_time_clean(timeout=self.weather_timeout)
-                self.data = self._get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
-                                                     state=self.state, country=self.country, lat=self.lat, lon=self.lon)
+                self.data = self._get_cached_weather(
+                    timeout=timeout_param,
+                    req_type=self.req_type,
+                    city=self.city,
+                    state=self.state,
+                    country=self.country,
+                    lat=self.lat,
+                    lon=self.lon,
+                )
                 if str(self.data["cod"]) != "200":
                     raise FileNotFoundError(self.data["message"])
                 else:
                     return self.data
             elif self.req_type == "forecast":
                 timeout_param = self._timeout_time_clean(timeout=self.forecast_timeout)
-                self.data = self._get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
-                                                     state=self.state, country=self.country, lat=self.lat, lon=self.lon)
+                self.data = self._get_cached_weather(
+                    timeout=timeout_param,
+                    req_type=self.req_type,
+                    city=self.city,
+                    state=self.state,
+                    country=self.country,
+                    lat=self.lat,
+                    lon=self.lon,
+                )
                 if str(self.data["cod"]) != "200":
                     raise FileNotFoundError(self.data["message"])
                 else:
                     return self.data
             elif self.req_type == "air_pollution":
-                timeout_param = self._timeout_time_clean(timeout=self.air_pollution_timeout)
-                self.data = self._get_cached_weather(timeout=timeout_param, req_type=self.req_type, city=self.city,
-                                                     state=self.state, country=self.country, lat=self.lat, lon=self.lon)
+                timeout_param = self._timeout_time_clean(
+                    timeout=self.air_pollution_timeout
+                )
+                self.data = self._get_cached_weather(
+                    timeout=timeout_param,
+                    req_type=self.req_type,
+                    city=self.city,
+                    state=self.state,
+                    country=self.country,
+                    lat=self.lat,
+                    lon=self.lon,
+                )
                 if str(self.data["cod"]) != "200":
                     raise FileNotFoundError(self.data["message"])
                 else:
                     return self.data
             else:
-                raise ValueError("Provide valid req_type. ['weather', 'forecast', 'air_pollution']")
+                raise ValueError(
+                    "Provide valid req_type. ['weather', 'forecast', 'air_pollution']"
+                )
 
         except (OSError, FileNotFoundError, CacheCleaningDisabledError, TypeError):
             timeout_param = self._timeout_time_clean(timeout=self.forecast_timeout)
-            if self.city and self.req_type != 'air_pollution':
+            if self.city and self.req_type != "air_pollution":
                 if self.city and self.state and self.country:
-                    url = (f"{self.base_url}{self.req_type}?q={self.city},{self.state},{self.country}&APPID="
-                           f"{self.apikey}&units={self.units}")
+                    url = (
+                        f"{self.base_url}{self.req_type}?q={self.city},{self.state},{self.country}&APPID="
+                        f"{self.apikey}&units={self.units}"
+                    )
                     r = requests.get(url.strip())
                     self.data = r.json()
                     if str(self.data["cod"]) == "200":
                         try:
-                            self._create_cache(data=r.json(), timeout=timeout_param,
-                                               city=self.city, state=self.state,
-                                               country=self.country,
-                                               req_type=self.req_type)
+                            self._create_cache(
+                                data=r.json(),
+                                timeout=timeout_param,
+                                city=self.city,
+                                state=self.state,
+                                country=self.country,
+                                req_type=self.req_type,
+                            )
                         except OSError:
                             self.data = r.json()
 
@@ -282,9 +345,14 @@ class Weather(WeatherCache, LocationTrack):
                     self.data = r.json()
                     if str(self.data["cod"]) == "200":
                         try:
-                            self._create_cache(data=r.json(), timeout=timeout_param,
-                                               city=self.city, state=self.state, country=self.country,
-                                               req_type=self.req_type)
+                            self._create_cache(
+                                data=r.json(),
+                                timeout=timeout_param,
+                                city=self.city,
+                                state=self.state,
+                                country=self.country,
+                                req_type=self.req_type,
+                            )
                         except OSError:
                             self.data = r.json()
                 else:
@@ -293,38 +361,53 @@ class Weather(WeatherCache, LocationTrack):
                     self.data = r.json()
                     if str(self.data["cod"]) == "200":
                         try:
-                            self._create_cache(data=r.json(), timeout=timeout_param,
-                                               city=self.city, state=self.state, country=self.country,
-                                               req_type=self.req_type)
+                            self._create_cache(
+                                data=r.json(),
+                                timeout=timeout_param,
+                                city=self.city,
+                                state=self.state,
+                                country=self.country,
+                                req_type=self.req_type,
+                            )
                         except OSError:
-
                             self.data = r.json()
 
                     if str(self.data["cod"]) != "200":
-                        raise ValueError(self.data["message"], "Check spelling or provide state and country code, "
-                                                               "or try zipcode and country.")
+                        raise ValueError(
+                            self.data["message"],
+                            "Check spelling or provide state and country code, "
+                            "or try zipcode and country.",
+                        )
 
             elif self.lat and self.lon:
-
                 url = f"{self.base_url}{self.req_type}?lat={self.lat}&lon={self.lon}&APPID={self.apikey}&units={self.units}"
                 r = requests.get(url.strip())
                 self.data = r.json()
 
                 if str(self.data["cod"]) != "200":
-                    raise ValueError(self.data["message"], "Please provide valid latitude and longitude value")
+                    raise ValueError(
+                        self.data["message"],
+                        "Please provide valid latitude and longitude value",
+                    )
 
             elif self.zip_code and self.country:
-
-                url = (f"{self.base_url}{self.req_type}?zip={self.zip_code},{self.country}&"
-                       f"APPID={self.apikey}&units={self.units}")
+                url = (
+                    f"{self.base_url}{self.req_type}?zip={self.zip_code},{self.country}&"
+                    f"APPID={self.apikey}&units={self.units}"
+                )
                 r = requests.get(url.strip())
                 self.data = r.json()
 
                 if str(self.data["cod"]) != "200":
-                    raise ValueError(self.data["message"], "Please provide valid zipcode and country code.")
+                    raise ValueError(
+                        self.data["message"],
+                        "Please provide valid zipcode and country code.",
+                    )
 
             else:
-                raise AttributeError("Not enough arguments provided to provide weather information.")
+                raise AttributeError(
+                    "Not enough arguments provided to provide weather information."
+                )
 
         if str(self.data["cod"]) != "200":
             raise ValueError(self.data["message"])
@@ -335,21 +418,26 @@ class Weather(WeatherCache, LocationTrack):
         """
         Get complete information regarding the next 12-hour forecast.
         """
-        return self.data['list'][:4]
+        return self.data["list"][:4]
 
     def next_12h_simplified(self):
         """
         Get a simplified version of the data for the next 12 hours.
         """
         simple_data = []
-        for dict_weather in self.data['list'][:4]:
-            simple_data.append((dict_weather['dt_txt'], dict_weather['main']['temp'],
-                                dict_weather['weather'][0]['description']))
+        for dict_weather in self.data["list"][:4]:
+            simple_data.append(
+                (
+                    dict_weather["dt_txt"],
+                    dict_weather["main"]["temp"],
+                    dict_weather["weather"][0]["description"],
+                )
+            )
         return simple_data
 
     def get_current_weather(self):
         req_type = "weather"
-        return  self.api_request(req_type=req_type)
+        return self.api_request(req_type=req_type)
 
     def get_forecast(self):
         req_type = "forecast"
@@ -373,52 +461,42 @@ class Weather(WeatherCache, LocationTrack):
         """
         # Constants for timeout dictionary keys
         output = {
-            'req_type': self.req_type,
-            'forecast_timeout': {
-                'seconds': 0,
+            "req_type": self.req_type,
+            "forecast_timeout": {"seconds": 0, "minutes": 0, "hours": 0, "days": 0},
+            "weather_timeout": {"seconds": 0, "minutes": 0, "hours": 0, "days": 0},
+            "air_pollution_timeout": {
+                "seconds": 0,
                 "minutes": 0,
                 "hours": 0,
-                "days": 0
+                "days": 0,
             },
-            'weather_timeout': {
-                'seconds': 0,
-                "minutes": 0,
-                "hours": 0,
-                "days": 0
-            },
-            'air_pollution_timeout': {
-                'seconds': 0,
-                "minutes": 0,
-                "hours": 0,
-                "days": 0
-            }
         }
-        placeholder = ''
-        if output['req_type'] == 'weather':
-            placeholder = 'weather_timeout'
-        elif output['req_type'] == 'forecast':
-            placeholder = 'forecast_timeout'
-        elif output['req_type'] == 'air_pollution':
-            placeholder = 'air_pollution_timeout'
+        placeholder = ""
+        if output["req_type"] == "weather":
+            placeholder = "weather_timeout"
+        elif output["req_type"] == "forecast":
+            placeholder = "forecast_timeout"
+        elif output["req_type"] == "air_pollution":
+            placeholder = "air_pollution_timeout"
         else:
             raise ValueError("Please provide correct req_type")
 
         # Use regex to match and extract timeout values
-        match = re.match(r'^\d+\s*[a-zA-Z]+$', timeout)
+        match = re.match(r"^\d+\s*[a-zA-Z]+$", timeout)
         if match:
-            match = re.search(r'\d+', timeout)
+            match = re.search(r"\d+", timeout)
             if match:
                 # Extract the number part
                 number = int(match.group())
                 # Extract the character part (if any)
-                characters = timeout[match.end():].strip()
-                if characters[0].upper() == 'S':
+                characters = timeout[match.end() :].strip()
+                if characters[0].upper() == "S":
                     output[placeholder]["seconds"] = number
-                elif characters[0].upper() == 'M':
+                elif characters[0].upper() == "M":
                     output[placeholder]["minutes"] = number
-                elif characters[0].upper() == 'H':
+                elif characters[0].upper() == "H":
                     output[placeholder]["hours"] = number
-                elif characters[0].upper() == 'D':
+                elif characters[0].upper() == "D":
                     output[placeholder]["days"] = number
                 else:
                     raise ValueError("Please provide a valid timeout interval")
