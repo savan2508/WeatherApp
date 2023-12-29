@@ -13,17 +13,7 @@ def get_date(place, forecast_days=5, kind="Temperature"):
     weather_response = weather.get_forecast()
     weather_response_condensed = weather_response["list"][: forecast_days * 8]
 
-    if kind.lower() == "temperature":
-        filtered_data = [dicty["main"]["temp"] for dicty in weather_response_condensed]
-        return filtered_data
-
-    elif kind.lower() == "sky":
-        filtered_data = [
-            dicty["weather"][0]["main"] for dicty in weather_response_condensed
-        ]
-        return filtered_data
-
-    return 0
+    return weather_response_condensed
 
 
 if __name__ == "__main__":
