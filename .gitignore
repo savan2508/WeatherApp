@@ -13,3 +13,5 @@
 /.vscode/
 /__pycache__
 /weathermap/__pycache__
+/weather_dashboard/.env
+/weather_dashboard/weather_cache/
