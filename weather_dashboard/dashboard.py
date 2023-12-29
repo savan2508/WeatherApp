@@ -34,7 +34,7 @@ if submit_button:
 
         if option.lower() == "temperature":
             filtered_data = [dicty["main"]["temp"] for dicty in data]
-            dates = [dict["dt_txt"] for dict in data]
+            dates = [dicty["dt_txt"] for dicty in data]
 
             figure = px.line(
                 x=dates,
@@ -46,7 +46,14 @@ if submit_button:
 
         elif option.lower() == "sky":
             filtered_data = [dicty["weather"][0]["main"] for dicty in data]
-            # Add code for Sky plot (you can customize this part based on your data)
+            images_map = {
+                "Clear": "images/clear.png",
+                "Snow": "images/snow.png",
+                "Clouds": "images/cloud.png",
+                "Rain": "images/rain.png",
+            }
+            images_paths = [images_map[condition] for condition in filtered_data]
+            st.image(images_paths, width=115)
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
